@@ -61,7 +61,7 @@ func (stepConfigureVNC) Run(state map[string]interface{}) multistep.StepAction {
 		return multistep.ActionHalt
 	}
 
-	kvmData.Set("vnc", fmt.Sprintf(":%d", vncPort - 5900))
+	kvmData.Set("vnc", fmt.Sprintf(":%d,share=ignore", vncPort - 5900))
 	kvmData.Add("usbdevice", "tablet")
 
 	if err := WriteKvmScript(kvmPath, kvmData); err != nil {
