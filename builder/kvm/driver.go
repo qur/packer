@@ -43,8 +43,19 @@ func (d *KvmDriver) CreateDisk(output string, size string) error {
 
 func (d *KvmDriver) IsRunning(kvmPath string) (bool, error) {
 	//TODO: ...
+	k, err := NewKvmControl(kvmPath)
+	if err != nil {
+		return false, err
+	}
 
-	return false, nil
+	r, err := k.Execute("query-status")
+	if err != nil {
+		return false, err
+	}
+
+	running := r["running"].(bool)
+
+	return running, nil
 }
 
 func (d *KvmDriver) Start(kvmPath string) error {
@@ -55,6 +66,15 @@ func (d *KvmDriver) Start(kvmPath string) error {
 
 func (d *KvmDriver) Stop(kvmPath string) error {
 	//TODO: ...
+	k, err := NewKvmControl(kvmPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = k.Execute("quit")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,0 +1,143 @@
+package kvm
+
+import (
+	"net"
+	"path/filepath"
+	"encoding/json"
+	"log"
+	"bytes"
+)
+
+type kvmControl struct {
+	c        net.Conn
+	response chan map[string]interface{}
+	active   bool
+}
+
+type versionNum struct {
+	Major, Minor, Micro int
+}
+
+type qmpVersion struct {
+	Qemu    versionNum
+	Package string
+}
+
+type qmpInfo struct {
+	Version      qmpVersion
+	Capabilities []string
+}
+
+type execute struct {
+	Execute   string        `json:"execute"`
+	Arguments []interface{} `json:"arguments,omitempty"`
+}
+
+type timestamp struct {
+	Seconds, Microseconds int
+}
+
+type response struct {
+	QMP       *qmpInfo               `json:"QMP,omitempty"`
+	Return    map[string]interface{} `json:"return,omitempty"`
+	Event     string                 `json:"event,omitempty"`
+	Timestamp *timestamp             `json:"timestamp,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+}
+
+func NewKvmControl(kvmPath string) (*kvmControl, error) {
+	path := filepath.Join(filepath.Dir(kvmPath), "control")
+	conn, err := net.Dial("unix", path)
+	if err != nil {
+		return nil, err
+	}
+	k := &kvmControl{
+		c:        conn,
+		response: make(chan map[string]interface{}),
+		active:   true,
+	}
+	go k.receiver()
+	_, err = k.Execute("qmp_capabilities")
+	if err != nil {
+		return nil, err
+	}
+	return k, nil
+}
+
+func (k *kvmControl) Close() error {
+	k.active = false
+	return k.c.Close()
+}
+
+func (k *kvmControl) send(val interface{}) error {
+	encoded, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+	_, err = k.c.Write(encoded)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k *kvmControl) receiver() {
+	buf := make([]byte, 8192)
+	s := 0
+	for k.active {
+		n, err := k.c.Read(buf[s:])
+		if !k.active {
+			log.Printf("receiver: !active\n")
+			return
+		}
+		if err != nil {
+			log.Printf("receiver: %s\n", err)
+			return
+		}
+		parts := bytes.Split(buf[:s+n], []byte("\n"))
+		for _, part := range parts[:len(parts)-1] {
+			k.handleMsg(part)
+		}
+		finalPart := parts[len(parts)-1]
+		s = len(finalPart)
+		if s > 0 {
+			copy(buf, finalPart)
+		}
+	}
+	// Someone may be waiting for a response ...
+	select {
+	case k.response <- nil:
+	default:
+	}
+}
+
+func (k *kvmControl) handleMsg(msg []byte) {
+	resp := &response{}
+	err := json.Unmarshal(msg, resp)
+	if err != nil {
+		log.Printf("handleMsg: %s\n", err)
+		return
+	}
+	if resp.QMP != nil {
+		log.Printf("QMP: %+v\n", *resp.QMP)
+		return
+	}
+	if len(resp.Event) > 0 {
+		log.Printf("event: %+v\n", resp)
+		return
+	}
+	k.response <- resp.Return
+}
+
+func (k *kvmControl) Execute(command string, args ...interface{}) (map[string]interface{}, error) {
+	msg := &execute{
+		Execute:   command,
+		Arguments: args,
+	}
+	err := k.send(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return <-k.response, nil
+}
