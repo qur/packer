@@ -6,12 +6,24 @@ import (
 	"encoding/json"
 	"log"
 	"bytes"
+	"fmt"
 )
 
 type kvmControl struct {
+	path     string
 	c        net.Conn
+	info     *qmpInfo
+	qmp      chan *qmpInfo
 	response chan map[string]interface{}
 	active   bool
+}
+
+type notRunning struct {
+	k *kvmControl
+}
+
+func (n *notRunning) Error() string {
+	return fmt.Sprintf("'%s' does appear to be connected to a running KVM instance", n.k.path)
 }
 
 type versionNum struct {
@@ -52,11 +64,14 @@ func NewKvmControl(kvmPath string) (*kvmControl, error) {
 		return nil, err
 	}
 	k := &kvmControl{
+		path:     path,
 		c:        conn,
+		qmp:      make(chan *qmpInfo),
 		response: make(chan map[string]interface{}),
 		active:   true,
 	}
 	go k.receiver()
+	k.info = <-k.qmp
 	_, err = k.Execute("qmp_capabilities")
 	if err != nil {
 		return nil, err
@@ -120,6 +135,7 @@ func (k *kvmControl) handleMsg(msg []byte) {
 	}
 	if resp.QMP != nil {
 		log.Printf("QMP: %+v\n", *resp.QMP)
+		k.qmp <- resp.QMP
 		return
 	}
 	if len(resp.Event) > 0 {
@@ -130,6 +146,10 @@ func (k *kvmControl) handleMsg(msg []byte) {
 }
 
 func (k *kvmControl) Execute(command string, args ...interface{}) (map[string]interface{}, error) {
+	if !k.active {
+		return nil, &notRunning{k}
+	}
+
 	msg := &execute{
 		Execute:   command,
 		Arguments: args,

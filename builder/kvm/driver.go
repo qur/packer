@@ -13,13 +13,13 @@ type Driver interface {
 	CreateDisk(string, string) error
 
 	// Checks if the KVM file at the given path is running.
-	IsRunning(string) (bool, error)
+	IsRunning(*kvmControl) (bool, error)
 
 	// Start starts a VM specified by the path to the KVM given.
-	Start(string) error
+	Start(string) (*kvmControl, error)
 
 	// Stop stops a VM specified by the path to the KVM given.
-	Stop(string) error
+	Stop(*kvmControl) error
 
 	// Verify checks to make sure that this driver should function
 	// properly. This should check that all the files it will use
@@ -41,15 +41,12 @@ func (d *KvmDriver) CreateDisk(output string, size string) error {
 	return nil
 }
 
-func (d *KvmDriver) IsRunning(kvmPath string) (bool, error) {
+func (d *KvmDriver) IsRunning(control *kvmControl) (bool, error) {
 	//TODO: ...
-	k, err := NewKvmControl(kvmPath)
-	if err != nil {
-		return false, err
-	}
-
-	r, err := k.Execute("query-status")
-	if err != nil {
+	r, err := control.Execute("query-status")
+	if _, ok := err.(*notRunning); ok {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
 
@@ -58,20 +55,30 @@ func (d *KvmDriver) IsRunning(kvmPath string) (bool, error) {
 	return running, nil
 }
 
-func (d *KvmDriver) Start(kvmPath string) error {
+func (d *KvmDriver) Start(kvmPath string) (*kvmControl, error) {
 	//TODO: ...
 	cmd := exec.Command(kvmPath)
-	return cmd.Run()
-}
-
-func (d *KvmDriver) Stop(kvmPath string) error {
-	//TODO: ...
-	k, err := NewKvmControl(kvmPath)
+	err := cmd.Run()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = k.Execute("quit")
+	control, err := NewKvmControl(kvmPath)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = control.Execute("cont")
+	if err != nil {
+		return nil, err
+	}
+
+	return control, nil
+}
+
+func (d *KvmDriver) Stop(control *kvmControl) error {
+	//TODO: ...
+	_, err := control.Execute("quit")
 	if err != nil {
 		return err
 	}

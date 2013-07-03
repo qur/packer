@@ -14,10 +14,10 @@ import (
 //
 // Uses:
 //   communicator packer.Communicator
-//   config *config
-//   driver Driver
-//   ui     packer.Ui
-//   kvm_path string
+//   config   *config
+//   driver   Driver
+//   ui       packer.Ui
+//   control  *kvmControl
 //
 // Produces:
 //   <nothing>
@@ -28,7 +28,7 @@ func (s *stepShutdown) Run(state map[string]interface{}) multistep.StepAction {
 	config := state["config"].(*config)
 	driver := state["driver"].(Driver)
 	ui := state["ui"].(packer.Ui)
-	kvmPath := state["kvm_path"].(string)
+	control := state["control"].(*kvmControl)
 
 	if config.ShutdownCommand != "" {
 		ui.Say("Gracefully halting virtual machine...")
@@ -48,7 +48,7 @@ func (s *stepShutdown) Run(state map[string]interface{}) multistep.StepAction {
 		log.Printf("Waiting max %s for shutdown to complete", config.ShutdownTimeout)
 		shutdownTimer := time.After(config.ShutdownTimeout)
 		for {
-			running, _ := driver.IsRunning(kvmPath)
+			running, _ := driver.IsRunning(control)
 			if !running {
 				break
 			}
@@ -64,7 +64,7 @@ func (s *stepShutdown) Run(state map[string]interface{}) multistep.StepAction {
 			}
 		}
 	} else {
-		if err := driver.Stop(kvmPath); err != nil {
+		if err := driver.Stop(control); err != nil {
 			err := fmt.Errorf("Error stopping VM: %s", err)
 			state["error"] = err
 			ui.Error(err.Error())

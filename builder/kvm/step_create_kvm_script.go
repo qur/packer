@@ -82,6 +82,7 @@ func (stepCreateKvmScript) Cleanup(map[string]interface{}) {
 const DefaultKVMTemplate = `#!/bin/sh
 
 exec kvm \
+  -S \
   -name "{{ .Name }}" \
   -net "nic,model=virtio" \
   -net "user,hostfwd=tcp::2222-:22" \

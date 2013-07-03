@@ -16,7 +16,7 @@ import (
 //   kvm_path string
 //
 // Produces:
-//   <nothing>
+//   control *kvmControl
 type stepRun struct {
 	bootTime time.Time
 	kvmPath  string
@@ -34,12 +34,15 @@ func (s *stepRun) Run(state map[string]interface{}) multistep.StepAction {
 	s.kvmPath = kvmPath
 
 	ui.Say("Starting virtual machine...")
-	if err := driver.Start(kvmPath); err != nil {
+	control, err := driver.Start(kvmPath)
+	if err != nil {
 		err := fmt.Errorf("Error starting VM: %s", err)
 		state["error"] = err
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
+
+	state["control"] = control
 
 	ui.Message(fmt.Sprintf(
 		"The VM will be run headless, without a GUI. If you want to\n"+
@@ -58,6 +61,7 @@ func (s *stepRun) Run(state map[string]interface{}) multistep.StepAction {
 func (s *stepRun) Cleanup(state map[string]interface{}) {
 	driver := state["driver"].(Driver)
 	ui := state["ui"].(packer.Ui)
+	control := state["control"].(*kvmControl)
 
 	// If we started the machine... stop it.
 	if s.kvmPath != "" {
@@ -71,10 +75,10 @@ func (s *stepRun) Cleanup(state map[string]interface{}) {
 		}
 
 		// See if it is running
-		running, _ := driver.IsRunning(s.kvmPath)
+		running, _ := driver.IsRunning(control)
 		if running {
 			ui.Say("Stopping virtual machine...")
-			if err := driver.Stop(s.kvmPath); err != nil {
+			if err := driver.Stop(control); err != nil {
 				ui.Error(fmt.Sprintf("Error stopping VM: %s", err))
 			}
 		}
