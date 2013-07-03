@@ -103,11 +103,11 @@ func (k *kvmControl) receiver() {
 		n, err := k.c.Read(buf[s:])
 		if !k.active {
 			log.Printf("receiver: !active\n")
-			return
+			break
 		}
 		if err != nil {
 			log.Printf("receiver: %s\n", err)
-			return
+			break
 		}
 		parts := bytes.Split(buf[:s+n], []byte("\n"))
 		for _, part := range parts[:len(parts)-1] {
@@ -159,5 +159,10 @@ func (k *kvmControl) Execute(command string, args ...interface{}) (map[string]in
 		return nil, err
 	}
 
-	return <-k.response, nil
+	resp := <-k.response
+	if resp == nil {
+		return nil, &notRunning{k}
+	}
+
+	return resp, nil
 }
