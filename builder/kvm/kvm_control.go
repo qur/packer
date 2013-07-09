@@ -89,6 +89,7 @@ func (k *kvmControl) send(val interface{}) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("send: %s\n", encoded)
 	_, err = k.c.Write(encoded)
 	if err != nil {
 		return err
@@ -142,6 +143,7 @@ func (k *kvmControl) handleMsg(msg []byte) {
 		log.Printf("event: %+v\n", resp)
 		return
 	}
+	log.Printf("recv: %s\n", resp.Return)
 	k.response <- resp.Return
 }
 
