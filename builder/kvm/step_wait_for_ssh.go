@@ -149,23 +149,29 @@ func (s *stepWaitForSSH) waitForSSH(state map[string]interface{}) (packer.Commun
 		log.Printf("Detected IP: %s", ip)
 
 		// Attempt to connect to SSH port
-		nc, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, config.SSHPort))
+		connFunc := ssh.ConnectFunc(
+			"tcp", fmt.Sprintf("%s:%d", ip, config.SSHPort), 5*time.Minute)
+		nc, err := connFunc()
 		if err != nil {
 			log.Printf("TCP connection to SSH ip/port failed: %s", err)
 			continue
 		}
+		nc.Close()
 
 		// Then we attempt to connect via SSH
-		sshConfig := &gossh.ClientConfig{
-			User: config.SSHUser,
-			Auth: []gossh.ClientAuth{
-				gossh.ClientAuthPassword(ssh.Password(config.SSHPassword)),
-				gossh.ClientAuthKeyboardInteractive(
-					ssh.PasswordKeyboardInteractive(config.SSHPassword)),
+		config := &ssh.Config{
+			Connection: connFunc,
+			SSHConfig: &gossh.ClientConfig{
+				User: config.SSHUser,
+				Auth: []gossh.ClientAuth{
+					gossh.ClientAuthPassword(ssh.Password(config.SSHPassword)),
+					gossh.ClientAuthKeyboardInteractive(
+						ssh.PasswordKeyboardInteractive(config.SSHPassword)),
+				},
 			},
 		}
 
-		comm, err = ssh.New(nc, sshConfig)
+		comm, err = ssh.New(config)
 		if err != nil {
 			log.Printf("SSH handshake err: %s", err)
 			continue
