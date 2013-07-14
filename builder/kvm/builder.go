@@ -99,7 +99,7 @@ func (b *Builder) Prepare(raws ...interface{}) error {
 	}
 
 	if b.config.OutputDir == "" {
-		b.config.OutputDir = "kvm"
+		b.config.OutputDir = "output-kvm"
 	}
 
 	if b.config.SSHPort == 0 {
