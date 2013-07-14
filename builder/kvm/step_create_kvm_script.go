@@ -13,6 +13,7 @@ import (
 type kvmTemplateData struct {
 	Name     string
 	DiskName string
+	MemSize  uint
 	ISOPath  string
 }
 
@@ -37,6 +38,7 @@ func (stepCreateKvmScript) Run(state map[string]interface{}) multistep.StepActio
 	tplData := &kvmTemplateData{
 		config.VMName,
 		config.DiskName,
+		config.MemSize,
 		isoPath,
 	}
 
@@ -90,7 +92,7 @@ exec kvm \
   -monitor "unix:monitor,server,nowait" \
   -qmp "unix:control,server,nowait" \
   -drive "file={{ .DiskName }}.img,if=virtio" \
-  -cdrom "{{.ISOPath }}"
-  -m "512" \
+  -cdrom "{{ .ISOPath }}"
+  -m "{{ .MemSize }}" \
 
 `

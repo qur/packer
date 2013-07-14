@@ -25,6 +25,7 @@ type Builder struct {
 }
 
 type config struct {
+	MemSize         uint              `mapstrcuture:"mem_size"`
 	DiskName        string            `mapstructure:"vmdk_name"`
 	DiskSize        uint              `mapstructure:"disk_size"`
 	ISOMD5          string            `mapstructure:"iso_md5"`
@@ -59,6 +60,10 @@ func (b *Builder) Prepare(raws ...interface{}) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if b.config.MemSize == 0 {
+		b.config.MemSize = 512
 	}
 
 	if b.config.DiskName == "" {
