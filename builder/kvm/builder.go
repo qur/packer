@@ -47,6 +47,7 @@ type config struct {
 	KVMData         map[string]string `mapstructure:"kvm_data"`
 	VNCPortMin      uint              `mapstructure:"vnc_port_min"`
 	VNCPortMax      uint              `mapstructure:"vnc_port_max"`
+	SkipCompaction  bool              `mapstructure:"skip_compaction"`
 
 	PackerDebug bool `mapstructure:"packer_debug"`
 
@@ -234,9 +235,11 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		&stepRun{},
 		&stepTypeBootCommand{},
 		&stepWaitForSSH{},
-		&stepProvision{},
+		&common.StepProvision{},
 		&stepShutdown{},
 		&stepCleanFiles{},
+		&stepCleanKvmScript{},
+		&stepCompactDisk{},
 	}
 
 	// Setup the state bag

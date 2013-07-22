@@ -3,6 +3,7 @@ package kvm
 import (
 	"bytes"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -20,6 +21,8 @@ type Driver interface {
 
 	// Stop stops a VM specified by the path to the KVM given.
 	Stop(*kvmControl) error
+
+	CompactDisk(path string) error
 
 	// Verify checks to make sure that this driver should function
 	// properly. This should check that all the files it will use
@@ -90,6 +93,21 @@ func (d *KvmDriver) Verify() error {
 	//TODO: ...
 
 	return nil
+}
+
+func (d *KvmDriver) CompactDisk(path string) error {
+	cmd := exec.Command("qemu-img", "convert", "-f", "qcow2", "-O", "qcow2",
+		path, path + ".new")
+	if _, _, err := d.runAndLog(cmd); err != nil {
+		return err
+	}
+
+	err := os.Remove(path)
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(path + ".new", path)
 }
 
 func (d *KvmDriver) runAndLog(cmd *exec.Cmd) (string, string, error) {
