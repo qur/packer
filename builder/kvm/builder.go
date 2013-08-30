@@ -25,7 +25,7 @@ type Builder struct {
 }
 
 type config struct {
-	MemSize         uint              `mapstrcuture:"mem_size"`
+	MemSize         uint              `mapstructure:"mem_size"`
 	DiskName        string            `mapstructure:"vmdk_name"`
 	DiskSize        uint              `mapstructure:"disk_size"`
 	ISOChecksum     string            `mapstructure:"iso_checksum"`
