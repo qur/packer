@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"io/ioutil"
 )
 
 const BuilderId = "mitchellh.libvirt"
@@ -45,6 +46,7 @@ type config struct {
 	SSHPort              uint       `mapstructure:"ssh_port"`
 	SSHUser              string     `mapstructure:"ssh_username"`
 	VMName               string     `mapstructure:"vm_name"`
+	XMLTemplatePath      string     `mapstructure:"xml_template_path"`
 
 	RawBootWait        string `mapstructure:"boot_wait"`
 	RawSingleISOUrl    string `mapstructure:"iso_url"`
@@ -135,6 +137,7 @@ func (b *Builder) Prepare(raws ...interface{}) error {
 		"boot_wait":               &b.config.RawBootWait,
 		"shutdown_timeout":        &b.config.RawShutdownTimeout,
 		"ssh_wait_timeout":        &b.config.RawSSHWaitTimeout,
+		"xml_template_path":       &b.config.XMLTemplatePath,
 	}
 
 	for n, ptr := range templates {
@@ -278,6 +281,14 @@ func (b *Builder) Prepare(raws ...interface{}) error {
 			errs, fmt.Errorf("Failed parsing ssh_wait_timeout: %s", err))
 	}
 
+	if b.config.XMLTemplatePath != "" {
+		if err := b.validateXMLTemplatePath(); err != nil {
+			errs = packer.MultiErrorAppend(
+				errs, fmt.Errorf("vmx_template_path is invalid: %s", err))
+		}
+
+	}
+
 	if errs != nil && len(errs.Errors) > 0 {
 		return errs
 	}
@@ -300,7 +311,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		},
 		new(stepHTTPServer),
 		new(stepCreateDisk),
-		//new(stepCreateVM),
+		new(stepCreateXML),
 		//new(stepAttachISO),
 		//new(stepAttachFloppy),
 		//new(stepForwardSSH),
@@ -379,4 +390,19 @@ func (b *Builder) Cancel() {
 		log.Println("Cancelling the step runner...")
 		b.runner.Cancel()
 	}
+}
+
+func (b *Builder) validateXMLTemplatePath() error {
+	f, err := os.Open(b.config.XMLTemplatePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	return b.config.tpl.Validate(string(data))
 }
