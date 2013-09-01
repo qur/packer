@@ -27,6 +27,15 @@ func virsh(args ...string) (string, string, error) {
 	return runAndLog(cmd)
 }
 
+func isRunning(name string) (bool, error) {
+	output, _, err := virsh("domstate", name)
+	if err != nil {
+		return false, err
+	}
+
+	return strings.TrimSpace(output) == "running", nil
+}
+
 func qemuImg(args ...string) (string, string, error) {
 	if virshCmd == "" {
 		cmd, err := exec.LookPath("qemu-img")

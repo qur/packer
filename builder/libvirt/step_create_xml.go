@@ -36,7 +36,7 @@ func (stepCreateXML) Run(state multistep.StateBag) multistep.StepAction {
 	ui.Say("Building and writing XML file")
 
 	diskPath, err := filepath.Abs(filepath.Join(config.OutputDir,
-		config.VMName+".img"))
+		config.DiskName+".img"))
 	if err != nil {
 		err := fmt.Errorf("Error creating XML file: %s", err)
 		state.Put("error", err)

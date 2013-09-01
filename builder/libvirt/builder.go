@@ -316,8 +316,8 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		//new(stepAttachFloppy),
 		//new(stepForwardSSH),
 		//new(stepVBoxManage),
-		//new(stepRun),
-		//new(stepTypeBootCommand),
+		new(stepRun),
+		new(stepTypeBootCommand),
 		&common.StepConnectSSH{
 			SSHAddress:     sshAddress,
 			SSHConfig:      sshConfig,
