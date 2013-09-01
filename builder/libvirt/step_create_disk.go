@@ -11,9 +11,9 @@ import (
 // hard drive for the virtual machine.
 type stepCreateDisk struct{}
 
-func (s *stepCreateDisk) Run(state map[string]interface{}) multistep.StepAction {
-	config := state["config"].(*config)
-	ui := state["ui"].(packer.Ui)
+func (s *stepCreateDisk) Run(state multistep.StateBag) multistep.StepAction {
+	config := state.Get("config").(*config)
+	ui := state.Get("ui").(packer.Ui)
 
 	path := filepath.Join(config.OutputDir, config.DiskName + ".img")
 	size := fmt.Sprintf("%dM", config.DiskSize)
@@ -22,7 +22,7 @@ func (s *stepCreateDisk) Run(state map[string]interface{}) multistep.StepAction 
 	_, _, err := qemuImg("create", "-f", config.DiskType, path, size)
 	if err != nil {
 		err := fmt.Errorf("Error creating hard drive: %s", err)
-		state["error"] = err
+		state.Put("error", err)
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
@@ -30,4 +30,4 @@ func (s *stepCreateDisk) Run(state map[string]interface{}) multistep.StepAction 
 	return multistep.ActionContinue
 }
 
-func (s *stepCreateDisk) Cleanup(state map[string]interface{}) {}
+func (s *stepCreateDisk) Cleanup(state multistep.StateBag) {}

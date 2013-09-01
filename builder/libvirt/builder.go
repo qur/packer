@@ -320,11 +320,11 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	// Setup the state bag
-	state := make(map[string]interface{})
-	state["cache"] = cache
-	state["config"] = &b.config
-	state["hook"] = hook
-	state["ui"] = ui
+	state := &multistep.BasicStateBag{}
+	state.Put("cache", cache)
+	state.Put("config", &b.config)
+	state.Put("hook", hook)
+	state.Put("ui", ui)
 
 	// Run
 	if b.config.PackerDebug {
@@ -339,16 +339,16 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	b.runner.Run(state)
 
 	// If there was an error, return that
-	if rawErr, ok := state["error"]; ok {
+	if rawErr, ok := state.GetOk("error"); ok {
 		return nil, rawErr.(error)
 	}
 
 	// If we were interrupted or cancelled, then just exit.
-	if _, ok := state[multistep.StateCancelled]; ok {
+	if _, ok := state.GetOk(multistep.StateCancelled); ok {
 		return nil, errors.New("Build was cancelled.")
 	}
 
-	if _, ok := state[multistep.StateHalted]; ok {
+	if _, ok := state.GetOk(multistep.StateHalted); ok {
 		return nil, errors.New("Build was halted.")
 	}
 
