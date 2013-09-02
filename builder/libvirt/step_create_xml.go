@@ -11,6 +11,7 @@ import (
 
 type xmlTemplateData struct {
 	Name     string
+	NetName  string
 	MemSize  uint
 	DiskType string
 	DiskPath string
@@ -46,6 +47,7 @@ func (stepCreateXML) Run(state multistep.StateBag) multistep.StepAction {
 
 	tplData := &xmlTemplateData{
 		Name:     config.VMName,
+		NetName: config.VMName,
 		MemSize: config.MemSize,
 		DiskType:  config.DiskType,
 		DiskPath: diskPath,
@@ -157,7 +159,7 @@ const DefaultXMLTemplate = `
       <model type="cirrus" vram="9216" heads="1"/>
     </video>
     <interface type="network">
-      <source network="default"/>
+      <source network="{{ .NetName }}"/>
       <model type="virtio"/>
     </interface>
   </devices>

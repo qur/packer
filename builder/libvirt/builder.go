@@ -312,6 +312,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		new(stepHTTPServer),
 		new(stepCreateDisk),
 		new(stepCreateXML),
+		new(stepCreateNetwork),
 		//new(stepAttachISO),
 		//new(stepAttachFloppy),
 		//new(stepForwardSSH),

@@ -36,6 +36,7 @@ type stepTypeBootCommand struct{}
 func (s *stepTypeBootCommand) Run(state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*config)
 	httpPort := state.Get("http_port").(uint)
+	hostIp := state.Get("host_ip").(string)
 	ui := state.Get("ui").(packer.Ui)
 
 	// Get the VNC IP / Port
@@ -80,26 +81,6 @@ func (s *stepTypeBootCommand) Run(state multistep.StateBag) multistep.StepAction
 	defer c.Close()
 
 	log.Printf("Connected to VNC desktop: %s", c.DesktopName)
-
-	// Determine the host IP
-	/*
-	TODO: figure out how to do this ...
-	var ipFinder HostIPFinder
-	if runtime.GOOS == "windows" {
-		ipFinder = new(VMnetNatConfIPFinder)
-	} else {
-		ipFinder = &IfconfigIPFinder{Device: "vmnet8"}
-	}
-
-	hostIp, err := ipFinder.HostIP()
-	if err != nil {
-		err := fmt.Errorf("Error detecting host IP: %s", err)
-		state.Put("error", err)
-		ui.Error(err.Error())
-		return multistep.ActionHalt
-	}
-	*/
-	hostIp := "10.0.0.2"
 
 	log.Printf("Host IP for the VM: %s", hostIp)
 

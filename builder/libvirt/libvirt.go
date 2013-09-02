@@ -1,10 +1,12 @@
 package libvirt
 
 import (
+	"bufio"
 	"bytes"
 	"log"
 	"strings"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -74,4 +76,62 @@ func runAndLog(cmd *exec.Cmd) (string, string, error) {
 	returnStderr := strings.Replace(stderr.String(), "\r\n", "\n", -1)
 
 	return returnStdout, returnStderr, err
+}
+
+func getMac(vmName string) (string, error) {
+	xml, _, err := virsh("dumpxml", vmName)
+	if err != nil {
+		return "", err
+	}
+
+	var mac string
+
+	scanner := bufio.NewScanner(bytes.NewBuffer([]byte(xml)))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if !strings.Contains(line, "mac address") {
+			continue
+		}
+		parts := strings.Split(line, "'")
+		mac = parts[1]
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	if mac == "" {
+		return "", fmt.Errorf("MAC not found for VM '%s'", mac)
+	}
+
+	return mac, nil
+}
+
+func lookupIp(vmName, mac string) (string, error) {
+	leasesPath := "/var/lib/libvirt/dnsmasq/" + vmName + ".leases"
+	f, err := os.Open(leasesPath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	var ip string
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		parts := strings.Fields(scanner.Text())
+		if strings.ToLower(parts[1]) == strings.ToLower(mac) {
+			ip = parts[2]
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	if ip == "" {
+		return "", fmt.Errorf("Unknown MAC '%s'", mac)
+	}
+
+	return ip, nil
 }

@@ -2,7 +2,6 @@ package libvirt
 
 import (
 	gossh "code.google.com/p/go.crypto/ssh"
-	"fmt"
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/communicator/ssh"
 	"io/ioutil"
@@ -10,8 +9,19 @@ import (
 )
 
 func sshAddress(state multistep.StateBag) (string, error) {
-	sshHostPort := state.Get("sshHostPort").(uint)
-	return fmt.Sprintf("127.0.0.1:%d", sshHostPort), nil
+	config := state.Get("config").(*config)
+
+	mac, err := getMac(config.VMName)
+	if err != nil {
+		return "", err
+	}
+
+	ip, err := lookupIp(config.VMName, mac)
+	if err != nil {
+		return "", err
+	}
+
+	return ip + ":22", nil
 }
 
 func sshConfig(state multistep.StateBag) (*gossh.ClientConfig, error) {
