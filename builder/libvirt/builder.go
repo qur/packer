@@ -313,10 +313,6 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 		new(stepCreateDisk),
 		new(stepCreateXML),
 		new(stepCreateNetwork),
-		//new(stepAttachISO),
-		//new(stepAttachFloppy),
-		//new(stepForwardSSH),
-		//new(stepVBoxManage),
 		new(stepRun),
 		new(stepTypeBootCommand),
 		&common.StepConnectSSH{
@@ -324,11 +320,10 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 			SSHConfig:      sshConfig,
 			SSHWaitTimeout: b.config.sshWaitTimeout,
 		},
-		//new(stepUploadVersion),
-		//new(stepUploadGuestAdditions),
-		//new(common.StepProvision),
-		//new(stepShutdown),
-		//new(stepExport),
+		// can we upload any guest helpers?
+		new(common.StepProvision),
+		new(stepShutdown),
+		// compact disk?
 	}
 
 	// Setup the state bag
