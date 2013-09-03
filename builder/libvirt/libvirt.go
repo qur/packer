@@ -15,15 +15,23 @@ var (
 	qemuImgCmd = ""
 )
 
-func virsh(args ...string) (string, string, error) {
-	if virshCmd == "" {
-		cmd, err := exec.LookPath("virsh")
-		if err != nil {
-			return "", "", err
-		}
-		virshCmd = cmd
+func findTools() error {
+	var err error
+
+	virshCmd, err = exec.LookPath("virsh")
+	if err != nil {
+		return fmt.Errorf("libvirt management application ('virsh') not found in path.")
 	}
 
+	qemuImgCmd, err = exec.LookPath("qemu-img")
+	if err != nil {
+		return fmt.Errorf("Critical application 'qemu-img' not found in path.")
+	}
+
+	return nil
+}
+
+func virsh(args ...string) (string, string, error) {
 	cmd := exec.Command(virshCmd, args...)
 
 	return runAndLog(cmd)
@@ -39,14 +47,6 @@ func isRunning(name string) (bool, error) {
 }
 
 func qemuImg(args ...string) (string, string, error) {
-	if virshCmd == "" {
-		cmd, err := exec.LookPath("qemu-img")
-		if err != nil {
-			return "", "", err
-		}
-		qemuImgCmd = cmd
-	}
-
 	cmd := exec.Command(qemuImgCmd, args...)
 
 	return runAndLog(cmd)

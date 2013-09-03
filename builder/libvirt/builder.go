@@ -297,6 +297,12 @@ func (b *Builder) Prepare(raws ...interface{}) error {
 }
 
 func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packer.Artifact, error) {
+	// Check we have the required tools
+	err := findTools()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find required tools: %s", err)
+	}
+
 	steps := []multistep.Step{
 		&common.StepDownload{
 			Checksum:     b.config.ISOChecksum,
