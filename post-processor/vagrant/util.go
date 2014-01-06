@@ -34,6 +34,68 @@ func CopyContents(dst, src string) error {
 	return nil
 }
 
+func allZero(buf []byte) bool {
+	for _, v := range buf {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// Copies a file by copying the contents of the file to another place.
+func CopySparseContents(dst, src string) error {
+	srcF, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcF.Close()
+
+	dstF, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstF.Close()
+
+	// TODO: this should be blocksize + 1 (assume blocksize is 64k for now).
+	buf := make([]byte, 65536)
+
+	makeHole := false
+
+	for {
+		n, err := srcF.Read(buf)
+		data := buf[:n]
+		if n > 0 {
+			makeHole = allZero(data)
+			if makeHole {
+				if _, err := dstF.Seek(int64(n), os.SEEK_CUR); err != nil {
+					return err
+				}
+			} else if _, err := dstF.Write(data); err != nil {
+				return err
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	if makeHole {
+		s, err := srcF.Stat()
+		if err != nil {
+			return err
+		}
+		if err = dstF.Truncate(s.Size()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // DirToBox takes the directory and compresses it into a Vagrant-compatible
 // box. This function does not perform checks to verify that dir is
 // actually a proper box. This is an expected precondition.

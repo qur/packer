@@ -8,6 +8,7 @@ import (
 // Artifact is the result of running the libvirt builder, namely a set
 // of files associated with the resulting machine.
 type Artifact struct {
+	name  string
 	dir   string
 	f     []string
 	state map[string]interface{}
@@ -21,8 +22,8 @@ func (a *Artifact) Files() []string {
 	return a.f
 }
 
-func (*Artifact) Id() string {
-	return "VM"
+func (a *Artifact) Id() string {
+	return a.name
 }
 
 func (a *Artifact) String() string {

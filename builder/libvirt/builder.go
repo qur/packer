@@ -14,7 +14,7 @@ import (
 	"io/ioutil"
 )
 
-const BuilderId = "mitchellh.libvirt"
+const BuilderId = "qur.libvirt"
 
 type Builder struct {
 	config config
@@ -76,7 +76,7 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
 	warnings := make([]string, 0)
 
 	if b.config.DiskType == "" {
-		b.config.DiskType = "raw"
+		b.config.DiskType = "qcow2"
 	}
 
 	if b.config.DiskName == "" {
@@ -388,9 +388,15 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	artifact := &Artifact{
-		dir: b.config.OutputDir,
-		f:   files,
+		name:  b.config.VMName,
+		dir:   b.config.OutputDir,
+		f:     files,
+		state: make(map[string]interface{}),
 	}
+
+	artifact.state["diskType"] = b.config.DiskType
+	artifact.state["diskSize"] = b.config.DiskSize
+	artifact.state["domainType"] = "kvm"
 
 	return artifact, nil
 }
