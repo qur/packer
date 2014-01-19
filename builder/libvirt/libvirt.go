@@ -34,7 +34,7 @@ func findTools() error {
 func virsh(args ...string) (string, string, error) {
 	cmd := exec.Command(virshCmd, args...)
 
-	return runAndLog(cmd)
+	return runAndLog("virsh", cmd)
 }
 
 func isRunning(name string) (bool, error) {
@@ -49,10 +49,10 @@ func isRunning(name string) (bool, error) {
 func qemuImg(args ...string) (string, string, error) {
 	cmd := exec.Command(qemuImgCmd, args...)
 
-	return runAndLog(cmd)
+	return runAndLog("qemu-img", cmd)
 }
 
-func runAndLog(cmd *exec.Cmd) (string, string, error) {
+func runAndLog(tool string, cmd *exec.Cmd) (string, string, error) {
 	var stdout, stderr bytes.Buffer
 
 	log.Printf("Executing: %s %v", cmd.Path, cmd.Args[1:])
@@ -64,7 +64,7 @@ func runAndLog(cmd *exec.Cmd) (string, string, error) {
 	stderrString := strings.TrimSpace(stderr.String())
 
 	if _, ok := err.(*exec.ExitError); ok {
-		err = fmt.Errorf("VMware error: %s", stderrString)
+		err = fmt.Errorf("libvirt (%s) error: %s", tool, stderrString)
 	}
 
 	log.Printf("stdout: %s", stdoutString)
