@@ -285,7 +285,7 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
 	if b.config.XMLTemplatePath != "" {
 		if err := b.validateXMLTemplatePath(); err != nil {
 			errs = packer.MultiErrorAppend(
-				errs, fmt.Errorf("vmx_template_path is invalid: %s", err))
+				errs, fmt.Errorf("xml_template_path is invalid: %s", err))
 		}
 
 	}

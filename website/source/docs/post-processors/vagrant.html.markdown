@@ -28,6 +28,7 @@ providers.
 
 * AWS
 * DigitalOcean
+* libvirt
 * VirtualBox
 * VMware
 
@@ -95,5 +96,5 @@ Specify overrides within the `override` configuration by provider name:
 In the example above, the compression level will be set to 1 except for
 VMware, where it will be set to 0.
 
-The available provider names are: `aws`, `digitalocean`, `virtualbox`,
-and `vmware`.
+The available provider names are: `aws`, `digitalocean`, `libvirt`,
+`virtualbox`, and `vmware`.
