@@ -300,31 +300,3 @@ these variables isn't required, however.
 * `DiskType` - The type of disk to create (`disk_type` from above).
 * `DiskPath` - The path to the virtual disk image (including file extension).
 * `ISOPath` - The path to the ISO to use for the OS installation.
-
-## Building on a Remote vSphere Hypervisor
-
-In addition to using the desktop products of VMware locally to build
-virtual machines, Packer can use a remote VMware Hypervisor to build
-the virtual machine.
-
-When using a remote VMware Hypervisor, the builder still downloads the
-ISO and various files locally, and uploads these to the remote machine.
-Packer currently uses SSH to communicate to the ESXi machine rather than
-the vSphere API. At some point, the vSphere API may be used.
-
-To use a remote VMware vSphere Hypervisor to build your virtual machine,
-fill in the required `remote_*` configurations:
-
-* `remote_type` - This must be set to "esx5".
-
-* `remote_host` - The host of the remote machine.
-
-Additionally, there are some optional configurations that you'll likely
-have to modify as well:
-
-* `remote_datastore` - The path to the datastore where the VM will be
-  stored on the ESXi machine.
-
-* `remote_username` - The SSH username used to access the remote machine.
-
-* `remote_password` - The SSH password for access to the remote machine.
