@@ -88,6 +88,9 @@ Optional:
 * `disk_type` (string) - The type of libvirt virtual disk to create.
   The default is "qcow2", which is generally the best option when using KVM.
 
+* `domain_type` (string) - The type of libvirt domain to create (e.g. "kvm", "xen",
+  "lxc" etc).  If not specified, it defaults to "kvm".
+
 * `floppy_files` (array of strings) - A list of files to put onto a floppy
   disk that is attached when the VM is booted for the first time. This is
   most useful for unattended Windows installs, which look for an
@@ -288,6 +291,7 @@ Within the template, a handful of variables are available so that your
 template can continue working with the rest of the Packer machinery. Using
 these variables isn't required, however.
 
+* `DomainType` - The type of domain requested(`domain_type` from above).
 * `Name` - The name of the virtual machine.
 * `NetName` - The name of the libvirt network to connect to (packer will create
   a network to use whilst building the VM).

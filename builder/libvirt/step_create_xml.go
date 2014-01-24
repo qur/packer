@@ -10,12 +10,13 @@ import (
 )
 
 type xmlTemplateData struct {
-	Name     string
-	NetName  string
-	MemSize  uint
-	DiskType string
-	DiskPath string
-	ISOPath  string
+	DomainType string
+	Name       string
+	NetName    string
+	MemSize    uint
+	DiskType   string
+	DiskPath   string
+	ISOPath    string
 }
 
 // This step creates the XML file for the VM.
@@ -46,12 +47,13 @@ func (stepCreateXML) Run(state multistep.StateBag) multistep.StepAction {
 	}
 
 	tplData := &xmlTemplateData{
-		Name:     config.VMName,
-		NetName: config.VMName,
-		MemSize: config.MemSize,
-		DiskType:  config.DiskType,
-		DiskPath: diskPath,
-		ISOPath:  isoPath,
+		DomainType: config.DomainType,
+		Name:       config.VMName,
+		NetName:    config.VMName,
+		MemSize:    config.MemSize,
+		DiskType:   config.DiskType,
+		DiskPath:   diskPath,
+		ISOPath:    isoPath,
 	}
 
 	xmlTemplate := DefaultXMLTemplate
@@ -124,7 +126,7 @@ func (stepCreateXML) Cleanup(multistep.StateBag) {
 // This is hardcoded here. If you wish to use a custom template please
 // do so by specifying in the builder configuration.
 const DefaultXMLTemplate = `
-<domain type="kvm">
+<domain type="{{ .DomainType }}">
   <name>{{ .Name }}</name>
   <memory unit="MiB">{{ .MemSize }}</memory>
   <vcpu placement="static">1</vcpu>

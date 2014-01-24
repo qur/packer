@@ -26,6 +26,7 @@ type config struct {
 
 	BootCommand          []string   `mapstructure:"boot_command"`
 	MemSize              uint       `mapstructure:"mem_size"`
+	DomainType           string     `mapstructure:"domain_type"`
 	DiskName             string     `mapstructure:"disk_name"`
 	DiskType             string     `mapstructure:"disk_type"`
 	DiskSize             uint       `mapstructure:"disk_size"`
@@ -74,6 +75,10 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, error) {
 	// Accumulate any errors
 	errs := common.CheckUnusedConfig(md)
 	warnings := make([]string, 0)
+
+	if b.config.DomainType == "" {
+		b.config.DomainType = "kvm"
+	}
 
 	if b.config.DiskType == "" {
 		b.config.DiskType = "qcow2"
